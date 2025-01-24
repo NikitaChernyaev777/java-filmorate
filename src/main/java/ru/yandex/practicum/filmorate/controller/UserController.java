@@ -16,6 +16,7 @@ import java.util.*;
 public class UserController {
 
     private final Map<Long, User> users = new HashMap<>();
+    private final Set<String> emails = new HashSet<>();
 
     @GetMapping
     public List<User> getAllUsers() {
@@ -27,17 +28,14 @@ public class UserController {
     public User createUser(@Valid @RequestBody User user) {
         log.info("Создание нового пользователя {}", user.getLogin());
 
-        if (users.values().stream().anyMatch(existingUser -> user.getEmail().equals(existingUser.getEmail()))) {
+        if (emails.contains(user.getEmail())) {
             log.warn("Электронная почта {} уже используется!", user.getEmail());
             throw new DuplicatedDataException("Данная электронная почта уже используется!");
         }
 
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-
         user.setId(getNextId());
         users.put(user.getId(), user);
+        emails.add(user.getEmail());
 
         log.info("Новый пользователь {} с id {} успешно создан", user.getLogin(), user.getId());
         return user;
@@ -58,14 +56,14 @@ public class UserController {
             throw new NotFoundException("Пользователь не найден!");
         }
 
-        if (users.values().stream()
-                .filter(user -> !user.getId().equals(newUser.getId()))
-                .anyMatch(user -> user.getEmail().equals(newUser.getEmail()))) {
+        if (!existingUser.getEmail().equals(newUser.getEmail()) && emails.contains(newUser.getEmail())) {
             log.warn("Электронная почта {} уже используется, она не может быть обновлена!", newUser.getEmail());
             throw new DuplicatedDataException("Данная электронная почта уже используется!");
         }
 
+        emails.remove(existingUser.getEmail());
         updateUserFields(existingUser, newUser);
+        emails.add(existingUser.getEmail());
 
         log.info("Данные пользователя {} с id {} спешно обновлены", existingUser.getLogin(), existingUser.getId());
         return existingUser;

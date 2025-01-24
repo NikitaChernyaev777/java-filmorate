@@ -28,11 +28,8 @@ public class UserControllerTest {
     }
 
     private User createValidUser() {
-        User user = new User();
-        user.setEmail("user@mail.ru");
-        user.setLogin("Login");
-        user.setName("User");
-        return user;
+        return new User("user@mail.ru", "Login", "User",
+                LocalDate.of(1996, 8, 7));
     }
 
     @Test
