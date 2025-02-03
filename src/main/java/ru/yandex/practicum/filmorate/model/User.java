@@ -9,6 +9,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -29,6 +31,8 @@ public class User {
 
     @PastOrPresent(message = "Дата рождения не может быть указана в будущем времени!")
     private LocalDate birthday;
+
+    private Set<Long> friends = new HashSet<>();
 
     public User(String email, String login, String name, LocalDate birthday) {
         this.email = email;
