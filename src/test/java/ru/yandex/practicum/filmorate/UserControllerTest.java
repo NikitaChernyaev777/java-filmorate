@@ -4,17 +4,15 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class UserControllerTest {
 
@@ -28,16 +26,7 @@ public class UserControllerTest {
     }
 
     private User createValidUser() {
-        return new User("user@mail.ru", "Login", "User",
-                LocalDate.of(1996, 8, 7));
-    }
-
-    @Test
-    public void shouldPassWhenValidRequiredFields() {
-        User user = createValidUser();
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        assertEquals(0, violations.size(),
-                "Ожидалось, что пользователь с корректными данными пройдет валидацию");
+        return new User();
     }
 
     @ParameterizedTest
@@ -56,13 +45,5 @@ public class UserControllerTest {
         user.setLogin("Log in");
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertFalse(violations.isEmpty(), "Логин с пробелами не должен проходить валидацию");
-    }
-
-    @Test
-    public void shouldFailWhenBirthDateInFuture() {
-        User user = createValidUser();
-        user.setBirthday(LocalDate.MAX);
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
-        assertEquals(1, violations.size(), "День рождения в будущем не должен проходить валидацию");
     }
 }

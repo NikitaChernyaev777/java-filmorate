@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -12,20 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
-    private final Set<String> emails = new HashSet<>();
 
     @Override
-    public List<User> getAllUsers() {
+    public List<User> findAll() {
         return new ArrayList<>(users.values());
     }
 
     @Override
-    public User getUserById(Long id) {
+    public User findById(Long id) {
         User user = users.get(id);
         if (user == null) {
             throw new NotFoundException("Пользователь не найден!");
@@ -34,51 +32,59 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User createUser(User user) {
-        if (emails.contains(user.getEmail())) {
-            throw new DuplicatedDataException("Данная электронная почта уже используется!");
-        }
-
-        user.setId(getNextId());
+    public User addUser(User user) {
+        long id = getNextId();
+        user.setId(id);
         users.put(user.getId(), user);
-        emails.add(user.getEmail());
-
         return user;
     }
 
     @Override
     public User updateUser(User user) {
-        if (user.getId() == null) {
-            throw new ConditionsNotMetException("Id не указан!");
-        }
-
-        User existingUser = users.get(user.getId());
-        if (existingUser == null) {
-            throw new NotFoundException("Пользователь не найден!");
-        }
-
-        if (!existingUser.getEmail().equals(user.getEmail()) && emails.contains(user.getEmail())) {
-            throw new DuplicatedDataException("Данная электронная почта уже используется!");
-        }
-
-        emails.remove(existingUser.getEmail());
-        updateUserFields(existingUser, user);
-        emails.add(existingUser.getEmail());
-
-        return existingUser;
+        users.put(user.getId(), user);
+        return user;
     }
 
-    private void updateUserFields(User existingUser, User user) {
-        existingUser.setEmail(user.getEmail());
-        existingUser.setLogin(user.getLogin());
+    @Override
+    public void addFriend(Long userId, Long friendId) {
+        User user = findById(userId);
+        User friend = findById(friendId);
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId);
+    }
 
-        existingUser.setName((user.getName() == null || user.getName().trim().isEmpty())
-                ? user.getLogin()
-                : user.getName());
+    @Override
+    public void removeFriend(Long userId, Long friendId) {
+        User user = findById(userId);
+        User friend = findById(friendId);
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
+    }
 
-        if (user.getBirthday() != null) {
-            existingUser.setBirthday(user.getBirthday());
-        }
+    @Override
+    public List<User> getFriends(Long userId) {
+        User user = findById(userId);
+        return user.getFriends().stream()
+                .map(this::findById)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long userId, Long otherUserId) {
+        User user = findById(userId);
+        User otherUser = findById(otherUserId);
+
+        Set<Long> commonFriends = new HashSet<>(user.getFriends());
+        commonFriends.retainAll(otherUser.getFriends());
+
+        return commonFriends.stream()
+                .map(this::findById)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return users.containsKey(id);
     }
 
     private long getNextId() {
