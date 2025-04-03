@@ -1,16 +1,17 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-@RequiredArgsConstructor
-public enum MpaRating {
-    G("G"),
-    PG("PG"),
-    PG13("PG-13"),
-    R("R"),
-    NC17("NC-17");
-
-    private final String rating;
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
+public class MpaRating {
+    private int id;
+    private String name;
 }

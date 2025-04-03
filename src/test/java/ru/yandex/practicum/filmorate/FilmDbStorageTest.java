@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate;
 
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,9 +7,10 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dao.MpaRatingDbStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.MpaRatingDto;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -21,18 +21,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @JdbcTest
-@AutoConfigureTestDatabase
-@Import({FilmDbStorage.class})
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@Import({FilmDbStorage.class, MpaRatingDbStorage.class})
 class FilmDbStorageTest {
 
-    private final FilmDbStorage filmStorage;
+    @Autowired
+    private FilmDbStorage filmStorage;
 
     private Film testFilm;
 
     @BeforeEach
     void setUp() {
-        MpaRatingDto mpa = new MpaRatingDto();
+        MpaRating mpa = new MpaRating();
         mpa.setId(1);
         mpa.setName("G");
 

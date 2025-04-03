@@ -4,14 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.GenreDbStorage;
+import ru.yandex.practicum.filmorate.dao.MpaRatingDbStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.GenreDto;
-import ru.yandex.practicum.filmorate.model.MpaRatingDto;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,9 +23,10 @@ public class FilmService {
 
     @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
-
     @Qualifier("userDbStorage")
     private final UserStorage userStorage;
+    private final MpaRatingDbStorage mpaRatingDbStorage;
+    private final GenreDbStorage genreDbStorage;
 
     public List<Film> getAllFilms() {
         log.info("Получение списка всех фильмов");
@@ -68,15 +72,22 @@ public class FilmService {
     }
 
     private void validateGenresAndMpaRating(Film film) {
-        if (film.getMpa() == null || film.getMpa().getId() < 1
-                || film.getMpa().getId() > MpaRatingDto.values().size()) {
-            throw new NotFoundException("Некорректный идентификатор MPA");
+        if (film.getMpa() == null) {
+            throw new NotFoundException("MPA рейтинг не может быть null");
+        }
+
+        if (!mpaRatingDbStorage.existsById(film.getMpa().getId())) {
+            throw new NotFoundException("MPA рейтинг с id=" + film.getMpa().getId() + " не найден");
         }
 
         if (film.getGenres() != null) {
-            for (GenreDto genre : film.getGenres()) {
-                if (genre.getId() < 1 || genre.getId() > GenreDto.values().size()) {
-                    throw new NotFoundException("Некорректный идентификатор жанра " + genre.getName());
+            Set<Integer> existingGenreIds = genreDbStorage.findAll().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toSet());
+
+            for (Genre genre : film.getGenres()) {
+                if (!existingGenreIds.contains(genre.getId())) {
+                    throw new NotFoundException("Жанр с id=" + genre.getId() + " не найден");
                 }
             }
         }

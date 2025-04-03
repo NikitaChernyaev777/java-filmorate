@@ -38,9 +38,9 @@ public class Film {
     @Positive(message = "Продолжительность фильма должна быть положительным числом!")
     private Integer duration;
 
-    private MpaRatingDto mpa;
+    private MpaRating mpa;
 
     private Set<Long> likes = new HashSet<>();
 
-    private Set<GenreDto> genres = new TreeSet<>(Comparator.comparing(GenreDto::getId));
+    private Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
 }

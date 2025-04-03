@@ -1,17 +1,17 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-@RequiredArgsConstructor
-public enum Genre {
-    COMEDY("Комедия"),
-    DRAMA("Драма"),
-    CARTOON("Мультфильм"),
-    THRILLER("Триллер"),
-    DOCUMENTARY("Документальный"),
-    ACTION("Боевик");
-
-    private final String title;
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
+public class Genre {
+    private int id;
+    private String name;
 }
