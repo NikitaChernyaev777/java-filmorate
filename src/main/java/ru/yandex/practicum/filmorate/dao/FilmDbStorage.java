@@ -138,7 +138,8 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> findTopPopular(int count) {
+    public List<Film> findPopular(Integer count, Integer genreId, Integer year) {
+        List<Film> films = new ArrayList<>();
         String topFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
                 "FROM film f " +
                 "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
@@ -147,8 +148,48 @@ public class FilmDbStorage implements FilmStorage {
                 "ORDER BY like_count DESC " +
                 "LIMIT ?";
 
-        List<Film> films = jdbcTemplate.query(topFilmsSql, this::mapToFilm, count);
+        String topGenreFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                "FROM film f " +
+                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
+                "LEFT JOIN genre g ON fg.genre_id = g.genre_id " +
+                "WHERE g.genre_id = ? " +
+                "GROUP BY f.film_id " +
+                "ORDER BY like_count DESC " +
+                "LIMIT ?";
 
+        String topYearFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                "FROM film f " +
+                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                "WHERE YEAR(f.release_date) = ?" +
+                "GROUP BY f.film_id " +
+                "ORDER BY like_count DESC " +
+                "LIMIT ?";
+
+        String topGenreAndYearFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                "FROM film f " +
+                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
+                "LEFT JOIN genre g ON fg.genre_id = g.genre_id " +
+                "WHERE g.genre_id = ? AND YEAR(f.release_date) = ?" +
+                "GROUP BY f.film_id " +
+                "ORDER BY like_count DESC " +
+                "LIMIT ?";
+        if (genreId == null && year == null) {
+            films = jdbcTemplate.query(topFilmsSql, this::mapToFilm, count);
+        }
+        if (genreId != null && year == null) {
+            films = jdbcTemplate.query(topGenreFilmsSql, this::mapToFilm, genreId, count);
+        }
+        if (genreId == null && year != null) {
+            films = jdbcTemplate.query(topYearFilmsSql, this::mapToFilm, year, count);
+        }
+        if (genreId != null && year != null) {
+            films = jdbcTemplate.query(topGenreAndYearFilmsSql, this::mapToFilm, genreId, year, count);
+        }
         loadGenresForFilms(films);
         loadLikesForFilms(films);
 
