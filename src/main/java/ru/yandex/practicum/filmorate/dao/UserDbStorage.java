@@ -110,6 +110,15 @@ public class UserDbStorage implements UserStorage {
         return jdbcTemplate.queryForObject(sql, Integer.class, id) > 0;
     }
 
+    @Override
+    public void deleteById(Long userId) {
+        String deleteUserFromFriendshipTableSql = "DELETE FROM friendship WHERE user_id = ? OR friend_id = ?";
+        jdbcTemplate.update(deleteUserFromFriendshipTableSql, userId, userId);
+
+        String deleteUserByIdSql = "DELETE FROM app_user WHERE user_id = ?";
+        jdbcTemplate.update(deleteUserByIdSql, userId);
+    }
+
     private User mapToUser(ResultSet rs, int rowNum) throws SQLException {
         User user = new User();
         user.setId(rs.getLong("user_id"));
