@@ -66,12 +66,12 @@ public class FilmService {
         log.info("Пользователь с id {} успешно удалил лайк у фильма с id {}", userId, filmId);
     }
 
-    public List<Film> getMostLikedFilms(int count) {
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         log.info("Получение списка наиболее популярных фильмов по количеству лайков");
-        return filmStorage.findTopPopular(count);
+        return filmStorage.findPopular(count, genreId, year);
     }
 
-    public void  deleteFilm(Long filmId) {
+    public void deleteFilm(Long filmId) {
         log.info("Удаление фильма с Id {}", filmId);
         filmStorage.findById(filmId);
         filmStorage.deleteById(filmId);
