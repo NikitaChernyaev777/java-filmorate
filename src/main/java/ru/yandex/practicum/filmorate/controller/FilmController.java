@@ -43,6 +43,12 @@ public class FilmController {
         return filmService.getPopularFilms(count, genreId, year);
     }
 
+    @GetMapping("/search")
+    public List<Film> getFilmsQuery(@RequestParam(required = false) String query,
+                                    @RequestParam(required = false) List<String> by) {
+        return filmService.getFilmsQuery(query, by);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film addFilm(@Valid @RequestBody Film film) {

@@ -176,6 +176,48 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film>getFilmsQuery(String query,List<String>by){
+        String topFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                "FROM film f " +
+                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                "GROUP BY f.film_id " +
+                "ORDER BY like_count DESC ";
+
+        String topFilmsByDirectorQuerySql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                "FROM film f " +
+                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                "GROUP BY f.film_id " +
+                "ORDER BY like_count DESC ";
+
+        if(by.equals(null) || query.equals(null)){
+            return jdbcTemplate.query(topFilmsSql,this::mapToFilm);
+        }
+        boolean isDirector = false;
+        boolean isTitle = false;
+        for(String param : by){
+            if(param.equals("director")){
+                isDirector = true;
+            }
+            if(param.equals("title")){
+                isTitle = true;
+            }
+        }
+        if(isDirector && isTitle){
+            return jdbcTemplate.query(topFilmsByDirectorQuerySql,this::mapToFilm,query);
+        }
+        if(isDirector){
+            return jdbcTemplate.query(topFilmsByDirectorQuerySql,this::mapToFilm,query);
+        }
+        if(isTitle){
+            return jdbcTemplate.query(topFilmsByDirectorQuerySql,this::mapToFilm,query);
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
     public void addLike(Long filmId, Long userId) {
         String insertLikeSql = "INSERT INTO film_like (film_id, user_id) VALUES (?, ?)";
         jdbcTemplate.update(insertLikeSql, filmId, userId);
