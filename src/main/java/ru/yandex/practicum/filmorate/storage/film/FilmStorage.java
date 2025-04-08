@@ -19,4 +19,6 @@ public interface FilmStorage {
     void removeLike(Long filmId, Long userId);
 
     List<Film> findTopPopular(int count);
+
+    void deleteById(Long filmId);
 }

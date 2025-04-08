@@ -75,4 +75,12 @@ public class UserService {
         userStorage.findById(otherUserId);
         return userStorage.getCommonFriends(userId, otherUserId);
     }
+
+    public void deleteUser(Long userId) {
+        log.info("Удаление пользователя с Id {}", userId);
+        if (!userStorage.existsById(userId)) {
+            throw new NotFoundException("Пользователь с Id=" + userId + " не найден!");
+        }
+        userStorage.deleteById(userId);
+    }
 }
