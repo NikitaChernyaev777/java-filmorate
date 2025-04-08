@@ -50,3 +50,16 @@ CREATE TABLE IF NOT EXISTS friendship (
     FOREIGN KEY (user_id) REFERENCES app_user(user_id),
     FOREIGN KEY (friend_id) REFERENCES app_user(user_id)
     );
+
+CREATE TABLE IF NOT EXISTS director (
+    director_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR NOT NULL
+    );
+
+CREATE TABLE IF NOT EXISTS film_director (
+    film_id BIGINT,
+    director_id INTEGER,
+    PRIMARY KEY (film_id, director_id),
+    FOREIGN KEY (film_id) REFERENCES film(film_id),
+    FOREIGN KEY (director_id) REFERENCES director(director_id)
+    );
