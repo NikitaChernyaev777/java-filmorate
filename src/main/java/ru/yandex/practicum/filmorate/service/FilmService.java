@@ -76,6 +76,12 @@ public class FilmService {
         return filmStorage.findFilmsByDirectorSorted(directorId, sortBy);
     }
 
+    public void  deleteFilm(Long filmId) {
+        log.info("Удаление фильма с Id {}", filmId);
+        filmStorage.findById(filmId);
+        filmStorage.deleteById(filmId);
+    }
+
     private void validateGenresAndMpaRating(Film film) {
         if (film.getMpa() == null) {
             throw new NotFoundException("MPA рейтинг не может быть null");

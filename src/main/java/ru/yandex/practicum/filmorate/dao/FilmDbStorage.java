@@ -180,6 +180,18 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    @Override
+    public void deleteById(Long filmId) {
+        String deleteFilmFromGenreTableSql = "DELETE FROM film_genre WHERE film_id = ?";
+        jdbcTemplate.update(deleteFilmFromGenreTableSql, filmId);
+
+        String deleteLikeSql = "DELETE FROM film_like WHERE film_id = ?";
+        jdbcTemplate.update(deleteLikeSql, filmId);
+
+        String deleteFilmByIdSql = "DELETE FROM film WHERE film_id = ?";
+        jdbcTemplate.update(deleteFilmByIdSql, filmId);
+    }
+
     private Film mapToFilm(ResultSet rs, int rowNum) throws SQLException {
         Film film = new Film();
         film.setId(rs.getLong("film_id"));
@@ -258,7 +270,6 @@ public class FilmDbStorage implements FilmStorage {
             film.getGenres().addAll(genres);
         });
     }
-
 
     private void loadLikesForFilm(Film film) {
         String sql = "SELECT user_id FROM film_like WHERE film_id = ?";
