@@ -71,6 +71,12 @@ public class FilmService {
         return filmStorage.findPopular(count, genreId, year);
     }
 
+    public List<Film> findFilmsByDirectorSorted(Long directorId, String sortBy) {
+        log.info("Получение всех отсортированных фильмов режиссера");
+        return filmStorage.findFilmsByDirectorSorted(directorId, sortBy);
+    }
+
+    public void  deleteFilm(Long filmId) {
     public List<Film>getFilmsQuery(String query,List<String>by){
         return filmStorage.getFilmsQuery(query,by);
     }

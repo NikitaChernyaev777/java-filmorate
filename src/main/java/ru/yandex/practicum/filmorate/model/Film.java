@@ -43,4 +43,6 @@ public class Film {
     private Set<Long> likes = new HashSet<>();
 
     private Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
+
+    private Set<Director> directors = new HashSet<>();
 }

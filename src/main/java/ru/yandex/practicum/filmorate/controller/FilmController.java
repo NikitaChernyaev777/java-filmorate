@@ -49,6 +49,11 @@ public class FilmController {
         return filmService.getFilmsQuery(query, by);
     }
 
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirectorSorted(@PathVariable Long directorId, @RequestParam String sortBy) {
+        return filmService.findFilmsByDirectorSorted(directorId, sortBy);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film addFilm(@Valid @RequestBody Film film) {
