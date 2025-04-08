@@ -71,6 +71,11 @@ public class FilmService {
         return filmStorage.findTopPopular(count);
     }
 
+    public List<Film> findFilmsByDirectorSorted(Long directorId, String sortBy) {
+        log.info("Получение всех отсортированных фильмов режиссера");
+        return filmStorage.findFilmsByDirectorSorted(directorId, sortBy);
+    }
+
     private void validateGenresAndMpaRating(Film film) {
         if (film.getMpa() == null) {
             throw new NotFoundException("MPA рейтинг не может быть null");
