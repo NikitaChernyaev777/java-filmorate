@@ -22,7 +22,7 @@ public interface FilmStorage {
 
     List<Film> findFilmsByDirectorSorted(Long directorId, String sortBy);
 
-    List<Film> getFilmsQuery(String query,List<String>by);
+    List<Film> getFilmsQuery(String query, List<String> by);
 
     void deleteById(Long filmId);
 }
