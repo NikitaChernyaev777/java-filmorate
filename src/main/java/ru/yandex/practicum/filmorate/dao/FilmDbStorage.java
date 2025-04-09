@@ -139,61 +139,93 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> findPopular(Integer count, Integer genreId, Integer year) {
-        List<Film> films = new ArrayList<>();
-        String topFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
-                "FROM film f " +
-                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
-                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
-                "GROUP BY f.film_id " +
-                "ORDER BY like_count DESC " +
-                "LIMIT ?";
+        StringBuilder sql = new StringBuilder(
+                "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                        "FROM film f " +
+                        "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                        "LEFT JOIN film_like fl ON f.film_id = fl.film_id "
+        );
 
-        String topGenreFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
-                "FROM film f " +
-                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
-                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
-                "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
-                "LEFT JOIN genre g ON fg.genre_id = g.genre_id " +
-                "WHERE g.genre_id = ? " +
-                "GROUP BY f.film_id " +
-                "ORDER BY like_count DESC " +
-                "LIMIT ?";
+        List<Object> parameters = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
 
-        String topYearFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
-                "FROM film f " +
-                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
-                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
-                "WHERE YEAR(f.release_date) = ?" +
-                "GROUP BY f.film_id " +
-                "ORDER BY like_count DESC " +
-                "LIMIT ?";
+        if (genreId != null) {
+            sql.append(
+                    "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
+                            "LEFT JOIN genre g ON fg.genre_id = g.genre_id "
+            );
+            conditions.add("g.genre_id = ?");
+            parameters.add(genreId);
+        }
 
-        String topGenreAndYearFilmsSql = "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
-                "FROM film f " +
-                "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
-                "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
-                "LEFT JOIN film_genre fg ON f.film_id = fg.film_id " +
-                "LEFT JOIN genre g ON fg.genre_id = g.genre_id " +
-                "WHERE g.genre_id = ? AND YEAR(f.release_date) = ?" +
+        if (year != null) {
+            conditions.add("YEAR(f.release_date) = ?");
+            parameters.add(year);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ");
+            sql.append(String.join(" AND ", conditions));
+        }
+
+        sql.append(
                 "GROUP BY f.film_id " +
-                "ORDER BY like_count DESC " +
-                "LIMIT ?";
-        if (genreId == null && year == null) {
-            films = jdbcTemplate.query(topFilmsSql, this::mapToFilm, count);
-        }
-        if (genreId != null && year == null) {
-            films = jdbcTemplate.query(topGenreFilmsSql, this::mapToFilm, genreId, count);
-        }
-        if (genreId == null && year != null) {
-            films = jdbcTemplate.query(topYearFilmsSql, this::mapToFilm, year, count);
-        }
-        if (genreId != null && year != null) {
-            films = jdbcTemplate.query(topGenreAndYearFilmsSql, this::mapToFilm, genreId, year, count);
-        }
+                        "ORDER BY like_count DESC " +
+                        "LIMIT ?"
+        );
+        parameters.add(count);
+
+        List<Film> films = jdbcTemplate.query(sql.toString(), this::mapToFilm, parameters.toArray());
+
         loadGenresForFilms(films);
         loadLikesForFilms(films);
 
         return films;
+    }
+
+
+    @Override
+    public List<Film> getFilmsQuery(String query, List<String> by) {
+        StringBuilder basicSqlQuery = new StringBuilder(
+                "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                        "FROM film f " +
+                        "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                        "LEFT JOIN film_like fl ON f.film_id = fl.film_id "
+        );
+
+        List<Object> parameters = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
+
+        if (by != null && query != null) {
+            String lowerQuery = "%" + query.toLowerCase() + "%";
+
+            if (by.contains("director")) {
+                basicSqlQuery.append(
+                        "LEFT JOIN film_director fd ON f.film_id = fd.film_id " +
+                                "LEFT JOIN director d ON fd.director_id = d.director_id "
+                );
+                conditions.add("LOWER(d.name) LIKE ?");
+                parameters.add(lowerQuery);
+            }
+            if (by.contains("title")) {
+                conditions.add("LOWER(f.name) LIKE ?");
+                parameters.add(lowerQuery);
+            }
+        }
+
+        if (!conditions.isEmpty()) {
+            basicSqlQuery.append("WHERE ");
+            basicSqlQuery.append(String.join(" OR ", conditions));
+        }
+
+        basicSqlQuery.append(" GROUP BY f.film_id, mpa_name ORDER BY like_count DESC");
+
+        List<Film> films = jdbcTemplate.query(basicSqlQuery.toString(), this::mapToFilm, parameters.toArray());
+
+        loadGenresForFilms(films);
+        loadLikesForFilms(films);
+        return films;
+
     }
 
     @Override

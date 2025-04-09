@@ -76,7 +76,11 @@ public class FilmService {
         return filmStorage.findFilmsByDirectorSorted(directorId, sortBy);
     }
 
-    public void  deleteFilm(Long filmId) {
+    public List<Film> getFilmsQuery(String query, List<String> by) {
+        return filmStorage.getFilmsQuery(query, by);
+    }
+
+    public void deleteFilm(Long filmId) {
         log.info("Удаление фильма с Id {}", filmId);
         filmStorage.findById(filmId);
         filmStorage.deleteById(filmId);
