@@ -9,23 +9,17 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Primary
@@ -429,5 +423,23 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE fd.film_id = ?";
         return new HashSet<>(jdbcTemplate.query(sql, (rs, rowNum) ->
                 new Director(rs.getLong("director_id"), rs.getString("name")), filmId));
+    }
+
+    @Override
+    public List<Film> getCommonFilmsWithFriend(Long userId, Long friendId) {
+        String sql = "SELECT f.* " +
+                "FROM film f " +
+                "WHERE f.film_id IN (" +
+                "    SELECT l.film_id" +
+                "    FROM film_like l " +
+                "    JOIN film_like fl ON l.film_id = fl.film_id " +
+                "    WHERE l.user_id = ? AND fl.user_id = ?" +
+                "    GROUP BY l.film_id" +
+                "    ORDER BY COUNT(*) DESC" +
+                ")";
+        List<Film> films = jdbcTemplate.query(sql, this::mapToFilm, userId, friendId);
+        loadGenresForFilms(films);
+        loadLikesForFilms(films);
+        return films;
     }
 }

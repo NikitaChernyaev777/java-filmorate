@@ -113,4 +113,9 @@ public class FilmService {
             }
         }
     }
+
+    public List<Film> getCommonFilmsWithFriend(Long userId, Long friendId) {
+        log.info("Получение списка общих фильмов 2ух друзей с id {} и id {}", userId, friendId);
+        return filmStorage.getCommonFilmsWithFriend(userId, friendId);
+    }
 }
