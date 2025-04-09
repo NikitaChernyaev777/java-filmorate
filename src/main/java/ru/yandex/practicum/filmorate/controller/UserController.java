@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final FilmService filmService;
 
     @GetMapping
     public List<User> getAllUsers() {
@@ -43,6 +46,11 @@ public class UserController {
     public List<User> getListOfCommonFriends(@PathVariable("id") Long userId,
                                              @PathVariable("otherId") Long otherUserId) {
         return userService.getCommonFriends(userId, otherUserId);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getUserRecommendations(@PathVariable Long id) {
+        return filmService.getRecommendations(id);
     }
 
     @PostMapping
