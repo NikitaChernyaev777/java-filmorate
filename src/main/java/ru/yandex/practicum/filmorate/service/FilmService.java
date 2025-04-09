@@ -77,7 +77,13 @@ public class FilmService {
     }
 
     public List<Film> getFilmsQuery(String query, List<String> by) {
+        log.info("Получение списка фильмов по запросу: {}, параметры {}", query, by);
         return filmStorage.getFilmsQuery(query, by);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        userStorage.findById(userId);
+        return filmStorage.getRecommendations(userId);
     }
 
     public void deleteFilm(Long filmId) {

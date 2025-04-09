@@ -9,10 +9,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.sql.Date;
@@ -250,6 +247,46 @@ public class FilmDbStorage implements FilmStorage {
         loadGenresForFilms(films);
         loadLikesForFilms(films);
 
+        return films;
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        //Ищем пользователя с похожими лайками
+        String similarUserQuery =
+                "SELECT f2.user_id " +
+                        "FROM film_like f1 " +
+                        "JOIN film_like f2 ON f1.film_id = f2.film_id " +
+                        "WHERE f1.user_id = ? AND f2.user_id <> f1.user_id " +
+                        "GROUP BY f2.user_id " +
+                        "ORDER BY COUNT(*) DESC " +
+                        "LIMIT 1 ";
+        List<Long> similarUsers = jdbcTemplate.query(similarUserQuery, (rs, rowNum) -> rs.getLong("user_id"), userId);
+
+        //Если таких пользователей нет, возвращаем пустой массив
+        if (similarUsers.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        //Получаем id схожего пользователя
+        Long similarUserId = similarUsers.get(0);
+
+        //Ищем фильмы, которые есть у пользователя похожими лайками, но нет у нас
+        String recommendationFilmsQuery =
+                "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
+                        "FROM film f " +
+                        "JOIN mpa_rating mr ON f.mpa_id = mr.mpa_id " +
+                        "LEFT JOIN film_like fl ON f.film_id = fl.film_id " +
+                        "WHERE fl.user_id = ? " +
+                        "AND fl.film_id " +
+                        "NOT IN (" +
+                        "    SELECT film_id " +
+                        "    FROM film_like " +
+                        "    WHERE user_id = ? ) " +
+                        "GROUP BY f.FILM_ID";
+
+        List<Film> films = jdbcTemplate.query(recommendationFilmsQuery, this::mapToFilm, similarUserId, userId);
+        loadLikesForFilms(films);
+        loadGenresForFilms(films);
         return films;
     }
 
