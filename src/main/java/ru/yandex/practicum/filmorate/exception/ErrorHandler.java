@@ -42,7 +42,6 @@ public class ErrorHandler {
         String errorMessage = exception.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-
         log.warn("Ошибка валидации: {}", errorMessage);
         return new ErrorResponse(errorMessage);
     }
@@ -53,7 +52,6 @@ public class ErrorHandler {
         String errorMessage = exception.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining("; "));
-
         log.warn("Ошибка ограничения: {}", errorMessage);
         return new ErrorResponse(errorMessage);
     }
@@ -71,5 +69,4 @@ public class ErrorHandler {
         log.warn("Ошибка при чтении сообщения: {}", exception.getMessage());
         return new ErrorResponse("Тело запроса отсутствует или некорректное");
     }
-
 }

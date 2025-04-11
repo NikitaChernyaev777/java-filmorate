@@ -17,19 +17,19 @@ import ru.yandex.practicum.filmorate.service.DirectorService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/directors")
 @RequiredArgsConstructor
+@RequestMapping("/directors")
 public class DirectorController {
 
     private final DirectorService directorService;
 
     @GetMapping
-    public List<Director> findAll() {
+    public List<Director> findAllDirectors() {
         return directorService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Director findById(@PathVariable Long id) {
+    public Director findDirectorById(@PathVariable Long id) {
         return directorService.findById(id);
     }
 
