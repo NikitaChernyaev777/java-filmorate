@@ -37,7 +37,8 @@ public class FilmDbStorage implements FilmStorage {
             throw new NotFoundException("MPA рейтинг с id=" + film.getMpa().getId() + " не найден");
         }
 
-        String insertFilmSql = "INSERT INTO film (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
+        String insertFilmSql = "INSERT INTO film (name, description, release_date, duration, mpa_id) " +
+                "VALUES (?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -245,7 +246,6 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public List<Film> getRecommendations(Long userId) {
-        //Ищем пользователя с похожими лайками
         String similarUserQuery =
                 "SELECT f2.user_id " +
                         "FROM film_like f1 " +
@@ -256,15 +256,12 @@ public class FilmDbStorage implements FilmStorage {
                         "LIMIT 1 ";
         List<Long> similarUsers = jdbcTemplate.query(similarUserQuery, (rs, rowNum) -> rs.getLong("user_id"), userId);
 
-        //Если таких пользователей нет, возвращаем пустой массив
         if (similarUsers.isEmpty()) {
             return new ArrayList<>();
         }
 
-        //Получаем id схожего пользователя
         Long similarUserId = similarUsers.get(0);
 
-        //Ищем фильмы, которые есть у пользователя похожими лайками, но нет у нас
         String recommendationFilmsQuery =
                 "SELECT f.*, mr.name AS mpa_name, COUNT(fl.user_id) AS like_count " +
                         "FROM film f " +
