@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.event.FeedEventType;
+import ru.yandex.practicum.filmorate.model.event.FeedOperation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -17,6 +19,7 @@ public class UserService {
 
     @Qualifier("userDbStorage")
     private final UserStorage userStorage;
+    private final FeedService feedService;
 
     public List<User> getAllUsers() {
         log.info("Получение списка всех пользователей");
@@ -51,6 +54,7 @@ public class UserService {
             throw new NotFoundException("Пользователь не найден!");
         }
         userStorage.addFriend(userId, friendId);
+        feedService.add(userId, friendId, FeedEventType.FRIEND, FeedOperation.ADD);
         log.info("Пользователи с id {} и {} успешно добавлены друг к другу в друзья", userId, friendId);
     }
 
@@ -60,6 +64,7 @@ public class UserService {
             throw new NotFoundException("Пользователь не найден!");
         }
         userStorage.removeFriend(userId, friendId);
+        feedService.add(userId, friendId, FeedEventType.FRIEND, FeedOperation.REMOVE);
         log.info("Пользователи с id {} и {} успешно удалены друг у друга из друзей", userId, friendId);
     }
 
