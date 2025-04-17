@@ -10,6 +10,7 @@ import lombok.Setter;
 @Setter
 @EqualsAndHashCode
 public class Review {
+
     private Long reviewId;
 
     @NotNull

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.GenreDbStorage;
 import ru.yandex.practicum.filmorate.dao.MpaRatingDbStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.event.FeedEventType;
+import ru.yandex.practicum.filmorate.model.event.FeedOperation;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -27,6 +29,7 @@ public class FilmService {
     private final UserStorage userStorage;
     private final MpaRatingDbStorage mpaRatingDbStorage;
     private final GenreDbStorage genreDbStorage;
+    private final FeedService feedService;
 
     public List<Film> getAllFilms() {
         log.info("Получение списка всех фильмов");
@@ -55,6 +58,7 @@ public class FilmService {
         filmStorage.findById(filmId);
         userStorage.findById(userId);
         filmStorage.addLike(filmId, userId);
+        feedService.add(userId, filmId, FeedEventType.LIKE, FeedOperation.ADD);
         log.info("Пользователь с id {} успешно поставил лайк фильму с id {}", userId, filmId);
     }
 
@@ -63,6 +67,7 @@ public class FilmService {
         filmStorage.findById(filmId);
         userStorage.findById(userId);
         filmStorage.removeLike(filmId, userId);
+        feedService.add(userId, filmId, FeedEventType.LIKE, FeedOperation.REMOVE);
         log.info("Пользователь с id {} успешно удалил лайк у фильма с id {}", userId, filmId);
     }
 
