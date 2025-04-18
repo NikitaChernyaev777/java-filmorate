@@ -1,25 +1,32 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Data;
-import ru.yandex.practicum.filmorate.model.event.FeedEventType;
-import ru.yandex.practicum.filmorate.model.event.FeedOperation;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+import ru.yandex.practicum.filmorate.model.enums.EventOperation;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
 
-@Data
+@Getter
+@Setter
 public class Feed {
+
+    @NotNull
     private Long timestamp;
+
+    @NotNull
     private Long userId;
-    private FeedEventType eventType;
-    private FeedOperation operation;
+
+    @NotNull
+    private EventType eventType;
+
+    @NotNull
     private Long eventId;
+
+    @NotNull
+    @JsonProperty("operation")
+    private EventOperation eventOperation;
+
+    @NotNull
     private Long entityId;
-
-    public Feed() {
-    }
-
-    public Feed(Long userId, Long entityId, FeedEventType eventType, FeedOperation operation) {
-        this.userId = userId;
-        this.entityId = entityId;
-        this.eventType = eventType;
-        this.operation = operation;
-    }
 }

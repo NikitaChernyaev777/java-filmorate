@@ -38,15 +38,14 @@ public class ReviewDbStorage implements ReviewStorage {
         }, keyHolder);
 
         review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
-
         return review;
     }
 
     @Override
-    public Review updateReview(Review review) {
+    public Optional<Review> updateReview(Review review) {
         String updateReviewSql = "UPDATE review SET content = ?, is_positive = ? WHERE review_id = ?";
         jdbcTemplate.update(updateReviewSql, review.getContent(), review.getIsPositive(), review.getReviewId());
-        return review;
+        return findById(review.getReviewId());
     }
 
     @Override
@@ -74,7 +73,8 @@ public class ReviewDbStorage implements ReviewStorage {
 
     @Override
     public List<Review> findAll(int count) {
-        String findAllSql = "SELECT r.*, COALESCE(SUM(rl.rating), 0) AS useful FROM review r " +
+        String findAllSql = "SELECT r.*, COALESCE(SUM(rl.is_useful), 0) AS useful " +
+                "FROM review r " +
                 " LEFT JOIN review_like rl ON r.review_id = rl.review_id " +
                 "GROUP BY r.review_id " +
                 "ORDER BY useful DESC " +

@@ -22,6 +22,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Qualifier("userDbStorage")
 public class UserDbStorage implements UserStorage {
+
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -65,7 +66,6 @@ public class UserDbStorage implements UserStorage {
         if (users.isEmpty()) {
             throw new NotFoundException("Пользователь с Id=" + id + " не найден");
         }
-
         return users.get(0);
     }
 
@@ -114,6 +114,9 @@ public class UserDbStorage implements UserStorage {
     public void deleteById(Long userId) {
         String deleteUserFromFriendshipTableSql = "DELETE FROM friendship WHERE user_id = ? OR friend_id = ?";
         jdbcTemplate.update(deleteUserFromFriendshipTableSql, userId, userId);
+
+        String deleteUserFromFeedTableSql = "DELETE FROM feed WHERE user_id = ?";
+        jdbcTemplate.update(deleteUserFromFeedTableSql, userId);
 
         String deleteUserByIdSql = "DELETE FROM app_user WHERE user_id = ?";
         jdbcTemplate.update(deleteUserByIdSql, userId);

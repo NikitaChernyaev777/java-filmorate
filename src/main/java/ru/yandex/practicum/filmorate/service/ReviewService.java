@@ -4,9 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.event.FeedEventType;
-import ru.yandex.practicum.filmorate.model.event.FeedOperation;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventOperation;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -22,27 +23,32 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
-    private final FeedService feedService;
+    private final FeedStorage feedStorage;
 
     public Review addReview(Review review) {
         validateReview(review);
-        Review reviewNew = reviewStorage.addReview(review);
-        log.info("Добавление отзыва с Id {}", reviewNew.getReviewId());
-        feedService.add(reviewNew.getUserId(), reviewNew.getReviewId(), FeedEventType.REVIEW, FeedOperation.ADD);
-        return reviewNew;
+        Review addReview = reviewStorage.addReview(review);
+        log.info("Добавление отзыва с Id {}", addReview.getReviewId());
+        feedStorage.addEvent(addReview.getUserId(), addReview.getReviewId(), EventOperation.ADD, EventType.REVIEW);
+
+        return addReview;
     }
 
     public Review updateReview(Review review) {
         log.info("Обновление отзыва с Id {}", review.getReviewId());
         validateReview(review);
-        feedService.add(review.getUserId(), review.getReviewId(), FeedEventType.REVIEW, FeedOperation.UPDATE);
-        return reviewStorage.updateReview(review);
+        Review updateReview = reviewStorage.updateReview(review)
+                .orElseThrow(() -> new NotFoundException("Отзыв с ID " + review.getReviewId() + " не найден"));
+        feedStorage.addEvent(updateReview.getUserId(), updateReview.getReviewId(), EventOperation.UPDATE,
+                EventType.REVIEW);
+        return updateReview;
     }
 
     public void deleteReview(Long reviewId) {
         log.info("Удаление отзыва с reviewId {}", reviewId);
         List<Review> review = reviewStorage.findById(reviewId).stream().collect(Collectors.toList());
-        feedService.add(review.getFirst().getUserId(), review.getFirst().getReviewId(), FeedEventType.REVIEW, FeedOperation.REMOVE);
+        feedStorage.addEvent(review.getFirst().getUserId(), review.getFirst().getReviewId(), EventOperation.REMOVE,
+                EventType.REVIEW);
         reviewStorage.deleteById(reviewId);
     }
 
@@ -62,18 +68,15 @@ public class ReviewService {
     public void addLike(Long reviewId, Long userId) {
         log.info("Добавление пользователем {} лайка отзыву с id {}", userId, reviewId);
         reviewStorage.addLike(reviewId, userId);
-        feedService.add(userId, reviewId, FeedEventType.LIKE, FeedOperation.ADD);
     }
 
     public void addDislike(Long reviewId, Long userId) {
         log.info("Добавление пользователем {} дизлайка отзыву с id {}", userId, reviewId);
         reviewStorage.addDislike(reviewId, userId);
-        feedService.add(userId, reviewId, FeedEventType.LIKE, FeedOperation.ADD);
     }
 
     public void removeReaction(Long reviewId, Long userId) {
         reviewStorage.removeReaction(reviewId, userId);
-        feedService.add(userId, reviewId, FeedEventType.LIKE, FeedOperation.REMOVE);
     }
 
     private void validateReview(Review review) {

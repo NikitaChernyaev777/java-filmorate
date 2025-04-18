@@ -80,6 +80,9 @@ public class FilmDbStorage implements FilmStorage {
 
         updateFilmGenres(film);
 
+        String deleteDirectorSql = "DELETE FROM film_director WHERE film_id = ?";
+        jdbcTemplate.update(deleteDirectorSql, film.getId());
+
         if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
             updateFilmDirectors(film);
         }
@@ -119,8 +122,13 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addLike(Long filmId, Long userId) {
-        String insertLikeSql = "INSERT INTO film_like (film_id, user_id) VALUES (?, ?)";
-        jdbcTemplate.update(insertLikeSql, filmId, userId);
+        String checkSql = "SELECT COUNT(*) FROM film_like WHERE film_id = ? AND user_id = ?";
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, filmId, userId);
+
+        if (count != null && count == 0) {
+            String insertLikeSql = "INSERT INTO film_like (film_id, user_id) VALUES (?, ?)";
+            jdbcTemplate.update(insertLikeSql, filmId, userId);
+        }
     }
 
     @Override

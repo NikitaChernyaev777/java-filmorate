@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface DirectorStorage {
 
-    Optional<Director> findById(long id);
+    Optional<Director> findById(Long id);
 
     List<Director> findAll();
 

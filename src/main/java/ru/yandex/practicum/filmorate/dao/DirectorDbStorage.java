@@ -27,7 +27,7 @@ public class DirectorDbStorage implements DirectorStorage {
     }
 
     @Override
-    public Optional<Director> findById(long id) {
+    public Optional<Director> findById(Long id) {
         String findByIdSql = "SELECT * FROM director WHERE director_id = ?";
         List<Director> directors = jdbcTemplate.query(findByIdSql, (rs, rowNum) ->
                 new Director(rs.getLong("director_id"), rs.getString("name")), id);
@@ -59,8 +59,11 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public void deleteById(Long id) {
-        String deleteByIdSql = "DELETE FROM director WHERE director_id = ?";
-        jdbcTemplate.update(deleteByIdSql, id);
+        String deleteFromFilmDirectorSql = "DELETE FROM film_director WHERE director_id = ?";
+        jdbcTemplate.update(deleteFromFilmDirectorSql, id);
+
+        String deleteDirectorSql = "DELETE FROM director WHERE director_id = ?";
+        jdbcTemplate.update(deleteDirectorSql, id);
     }
 
     @Override

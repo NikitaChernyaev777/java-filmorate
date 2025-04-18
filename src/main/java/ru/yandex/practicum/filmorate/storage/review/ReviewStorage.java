@@ -9,7 +9,7 @@ public interface ReviewStorage {
 
     Review addReview(Review review);
 
-    Review updateReview(Review review);
+    Optional<Review> updateReview(Review review);
 
     void deleteById(Long reviewId);
 

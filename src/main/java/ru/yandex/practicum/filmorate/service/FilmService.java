@@ -2,15 +2,16 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.GenreDbStorage;
 import ru.yandex.practicum.filmorate.dao.MpaRatingDbStorage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.event.FeedEventType;
-import ru.yandex.practicum.filmorate.model.event.FeedOperation;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.enums.EventOperation;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.feed.FeedStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -23,13 +24,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FilmService {
 
-    @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
-    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
     private final MpaRatingDbStorage mpaRatingDbStorage;
     private final GenreDbStorage genreDbStorage;
-    private final FeedService feedService;
+    private final FeedStorage feedStorage;
+    private final DirectorStorage directorStorage;
 
     public List<Film> getAllFilms() {
         log.info("Получение списка всех фильмов");
@@ -58,7 +58,7 @@ public class FilmService {
         filmStorage.findById(filmId);
         userStorage.findById(userId);
         filmStorage.addLike(filmId, userId);
-        feedService.add(userId, filmId, FeedEventType.LIKE, FeedOperation.ADD);
+        feedStorage.addEvent(userId, filmId, EventOperation.ADD, EventType.LIKE);
         log.info("Пользователь с id {} успешно поставил лайк фильму с id {}", userId, filmId);
     }
 
@@ -67,7 +67,7 @@ public class FilmService {
         filmStorage.findById(filmId);
         userStorage.findById(userId);
         filmStorage.removeLike(filmId, userId);
-        feedService.add(userId, filmId, FeedEventType.LIKE, FeedOperation.REMOVE);
+        feedStorage.addEvent(userId, filmId, EventOperation.REMOVE, EventType.LIKE);
         log.info("Пользователь с id {} успешно удалил лайк у фильма с id {}", userId, filmId);
     }
 
@@ -78,6 +78,9 @@ public class FilmService {
 
     public List<Film> findFilmsByDirectorSorted(Long directorId, String sortBy) {
         log.info("Получение всех отсортированных фильмов режиссера");
+        if (!directorStorage.existsById(directorId)) {
+            throw new NotFoundException("Режиссер с id" + directorId + "е найден");
+        }
         return filmStorage.findFilmsByDirectorSorted(directorId, sortBy);
     }
 
