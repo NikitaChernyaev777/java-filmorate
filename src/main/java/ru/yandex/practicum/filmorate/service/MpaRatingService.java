@@ -14,12 +14,17 @@ public class MpaRatingService {
 
     private final MpaRatingDbStorage mpaRatingDbStorage;
 
-    public List<MpaRating> getAllMpaRatings() {
+    public List<MpaRating> findAll() {
         return mpaRatingDbStorage.findAll();
     }
 
-    public MpaRating getMpaRatingById(int id) {
-        return mpaRatingDbStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException("Категория рейтинга с id = " + id + " не найдена!"));
+    public MpaRating findById(int id) {
+        MpaRating mpmpaRating = mpaRatingDbStorage.findById(id);
+
+        if (mpmpaRating == null) {
+            throw new NotFoundException("Категория рейтинга с ID=" + id + " не найдена");
+        }
+
+        return mpmpaRating;
     }
 }

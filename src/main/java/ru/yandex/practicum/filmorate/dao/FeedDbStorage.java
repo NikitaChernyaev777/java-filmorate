@@ -27,6 +27,7 @@ public class FeedDbStorage implements FeedStorage {
     public void addEvent(Long userId, Long entityId, EventOperation eventOperation, EventType eventType) {
         String addEventSql = "INSERT INTO feed (user_id, entity_id, timestamp, event_type, event_operation) " +
                 "VALUES (?, ?, ?, ?, ?)";
+
         jdbcTemplate.update(addEventSql, userId, entityId, Instant.now().toEpochMilli(), eventType.name(),
                 eventOperation.name());
     }
@@ -37,14 +38,14 @@ public class FeedDbStorage implements FeedStorage {
         return jdbcTemplate.query(findFeedSql, this::mapToFeed, userId);
     }
 
-    public Feed mapToFeed(ResultSet rs, int rowNum) throws SQLException {
+    public Feed mapToFeed(ResultSet resultSet, int rowNum) throws SQLException {
         Feed feed = new Feed();
-        feed.setEventId(rs.getLong("event_id"));
-        feed.setUserId(rs.getLong("user_id"));
-        feed.setEntityId(rs.getLong("entity_id"));
-        feed.setEventType(EventType.valueOf(rs.getString("event_type")));
-        feed.setEventOperation(EventOperation.valueOf(rs.getString("event_operation")));
-        feed.setTimestamp(rs.getLong(("timestamp")));
+        feed.setEventId(resultSet.getLong("event_id"));
+        feed.setUserId(resultSet.getLong("user_id"));
+        feed.setEntityId(resultSet.getLong("entity_id"));
+        feed.setEventType(EventType.valueOf(resultSet.getString("event_type")));
+        feed.setEventOperation(EventOperation.valueOf(resultSet.getString("event_operation")));
+        feed.setTimestamp(resultSet.getLong(("timestamp")));
 
         return feed;
     }

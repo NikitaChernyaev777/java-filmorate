@@ -49,8 +49,10 @@ public class FilmService {
 
     public Film updateFilm(Film film) {
         log.info("Обновление данных фильма {}", film.getName());
+
         validateGenresAndMpaRating(film);
         getFilmById(film.getId());
+
         return filmStorage.updateFilm(film);
     }
 
@@ -59,16 +61,19 @@ public class FilmService {
         userStorage.findById(userId);
         filmStorage.addLike(filmId, userId);
         feedStorage.addEvent(userId, filmId, EventOperation.ADD, EventType.LIKE);
-        log.info("Пользователь с id {} успешно поставил лайк фильму с id {}", userId, filmId);
+
+        log.info("Пользователь с ID={} успешно поставил лайк фильму с ID={}", userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
-        log.info("Удаление лайка у фильма с id {} от пользователя с id {}", filmId, userId);
+        log.info("Удаление лайка у фильма с ID={} от пользователя с ID={}", filmId, userId);
+
         filmStorage.findById(filmId);
         userStorage.findById(userId);
         filmStorage.removeLike(filmId, userId);
         feedStorage.addEvent(userId, filmId, EventOperation.REMOVE, EventType.LIKE);
-        log.info("Пользователь с id {} успешно удалил лайк у фильма с id {}", userId, filmId);
+
+        log.info("Пользователь с ID={} успешно удалил лайк у фильма с ID={}", userId, filmId);
     }
 
     public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
@@ -78,9 +83,11 @@ public class FilmService {
 
     public List<Film> findFilmsByDirectorSorted(Long directorId, String sortBy) {
         log.info("Получение всех отсортированных фильмов режиссера");
+
         if (!directorStorage.existsById(directorId)) {
-            throw new NotFoundException("Режиссер с id" + directorId + "е найден");
+            throw new NotFoundException("Режиссер с ID=" + directorId + "не найден");
         }
+
         return filmStorage.findFilmsByDirectorSorted(directorId, sortBy);
     }
 
@@ -95,7 +102,7 @@ public class FilmService {
     }
 
     public void deleteFilm(Long filmId) {
-        log.info("Удаление фильма с Id {}", filmId);
+        log.info("Удаление фильма с ID={}", filmId);
         filmStorage.findById(filmId);
         filmStorage.deleteById(filmId);
     }
@@ -106,7 +113,7 @@ public class FilmService {
         }
 
         if (!mpaRatingDbStorage.existsById(film.getMpa().getId())) {
-            throw new NotFoundException("MPA рейтинг с id=" + film.getMpa().getId() + " не найден");
+            throw new NotFoundException("MPA рейтинг с ID=" + film.getMpa().getId() + " не найден");
         }
 
         if (film.getGenres() != null) {
@@ -116,14 +123,14 @@ public class FilmService {
 
             for (Genre genre : film.getGenres()) {
                 if (!existingGenreIds.contains(genre.getId())) {
-                    throw new NotFoundException("Жанр с id=" + genre.getId() + " не найден");
+                    throw new NotFoundException("Жанр с ID=" + genre.getId() + " не найден");
                 }
             }
         }
     }
 
     public List<Film> getCommonFilmsWithFriend(Long userId, Long friendId) {
-        log.info("Получение списка общих фильмов 2ух друзей с id {} и id {}", userId, friendId);
+        log.info("Получение списка общих фильмов 2ух друзей с ID={} и ID={}", userId, friendId);
         return filmStorage.getCommonFilmsWithFriend(userId, friendId);
     }
 }

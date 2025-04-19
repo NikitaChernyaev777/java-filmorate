@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -9,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,20 +17,17 @@ public class MpaRatingDbStorage {
 
     public List<MpaRating> findAll() {
         String sql = "SELECT * FROM mpa_rating";
-        return jdbcTemplate.query(sql, this::mapRowToMpa);
+        return jdbcTemplate.query(sql, this::mapToMpa);
     }
 
-    public Optional<MpaRating> findById(int id) {
-        String sql = "SELECT * FROM mpa_rating WHERE mpa_id = ?";
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, this::mapRowToMpa, id));
-        } catch (EmptyResultDataAccessException exception) {
-            return Optional.empty();
-        }
+    public MpaRating findById(int id) {
+        String findByIdSql = "SELECT * FROM mpa_rating WHERE mpa_id = ?";
+        List<MpaRating> ratings = jdbcTemplate.query(findByIdSql, this::mapToMpa, id);
+        return ratings.isEmpty() ? null : ratings.get(0);
     }
 
-    private MpaRating mapRowToMpa(ResultSet rs, int rowNum) throws SQLException {
-        return new MpaRating(rs.getInt("mpa_id"), rs.getString("name"));
+    private MpaRating mapToMpa(ResultSet resultSet, int rowNum) throws SQLException {
+        return new MpaRating(resultSet.getInt("mpa_id"), resultSet.getString("name"));
     }
 
     public boolean existsById(int id) {

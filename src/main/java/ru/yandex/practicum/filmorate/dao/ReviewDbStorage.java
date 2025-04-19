@@ -13,7 +13,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,47 +27,26 @@ public class ReviewDbStorage implements ReviewStorage {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(insertReviewSql, new String[]{"review_id"});
-            ps.setLong(1, review.getFilmId());
-            ps.setLong(2, review.getUserId());
-            ps.setString(3, review.getContent());
-            ps.setBoolean(4, review.getIsPositive());
-            ps.setInt(5, review.getUseful());
-            return ps;
+            PreparedStatement preparedStatement = connection.prepareStatement(insertReviewSql,
+                    new String[]{"review_id"});
+            preparedStatement.setLong(1, review.getFilmId());
+            preparedStatement.setLong(2, review.getUserId());
+            preparedStatement.setString(3, review.getContent());
+            preparedStatement.setBoolean(4, review.getIsPositive());
+            preparedStatement.setInt(5, review.getUseful());
+            return preparedStatement;
         }, keyHolder);
 
         review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+
         return review;
     }
 
     @Override
-    public Optional<Review> updateReview(Review review) {
+    public Review updateReview(Review review) {
         String updateReviewSql = "UPDATE review SET content = ?, is_positive = ? WHERE review_id = ?";
         jdbcTemplate.update(updateReviewSql, review.getContent(), review.getIsPositive(), review.getReviewId());
         return findById(review.getReviewId());
-    }
-
-    @Override
-    public void deleteById(Long reviewId) {
-        String deleteByIdSql = "DELETE FROM review WHERE review_id = ?";
-        jdbcTemplate.update(deleteByIdSql, reviewId);
-    }
-
-    @Override
-    public Optional<Review> findById(Long reviewId) {
-        String sql = "SELECT * FROM review WHERE review_id = ?";
-        List<Review> reviews = jdbcTemplate.query(sql, this::mapToReview, reviewId);
-        return reviews.stream().findFirst();
-    }
-
-    @Override
-    public List<Review> findAllByFilmId(Long filmId, int count) {
-        String findByFilmIdSql = filmId != null
-                ? "SELECT * FROM review WHERE film_id = ? ORDER BY useful DESC LIMIT ?"
-                : "SELECT * FROM review ORDER BY useful DESC LIMIT ?";
-        return filmId != null
-                ? jdbcTemplate.query(findByFilmIdSql, this::mapToReview, filmId, count)
-                : jdbcTemplate.query(findByFilmIdSql, this::mapToReview, count);
     }
 
     @Override
@@ -79,22 +57,51 @@ public class ReviewDbStorage implements ReviewStorage {
                 "GROUP BY r.review_id " +
                 "ORDER BY useful DESC " +
                 "LIMIT ?";
+
         return jdbcTemplate.query(findAllSql, this::mapToReview, count);
+    }
+
+    @Override
+    public Review findById(Long reviewId) {
+        String findByIdSql = "SELECT * FROM review WHERE review_id = ?";
+        List<Review> reviews = jdbcTemplate.query(findByIdSql, this::mapToReview, reviewId);
+        return reviews.isEmpty() ? null : reviews.get(0);
+    }
+
+    @Override
+    public List<Review> findAllByFilmId(Long filmId, int count) {
+        String findByFilmIdSql = filmId != null
+                ? "SELECT * FROM review WHERE film_id = ? ORDER BY useful DESC LIMIT ?"
+                : "SELECT * FROM review ORDER BY useful DESC LIMIT ?";
+
+        return filmId != null
+                ? jdbcTemplate.query(findByFilmIdSql, this::mapToReview, filmId, count)
+                : jdbcTemplate.query(findByFilmIdSql, this::mapToReview, count);
+    }
+
+    @Override
+    public void deleteById(Long reviewId) {
+        String deleteByIdSql = "DELETE FROM review WHERE review_id = ?";
+        jdbcTemplate.update(deleteByIdSql, reviewId);
     }
 
     @Override
     public void addLike(Long reviewId, Long userId) {
         removeReaction(reviewId, userId);
+
         String addLikeSql = "INSERT INTO review_like (review_id, user_id, is_useful) VALUES (?, ?, TRUE)";
         jdbcTemplate.update(addLikeSql, reviewId, userId);
+
         incrementUseful(reviewId);
     }
 
     @Override
     public void addDislike(Long reviewId, Long userId) {
         removeReaction(reviewId, userId);
+
         String addDislikeSql = "INSERT INTO review_like (review_id, user_id, is_useful) VALUES (?, ?, FALSE)";
         jdbcTemplate.update(addDislikeSql, reviewId, userId);
+
         decrementUseful(reviewId);
     }
 
@@ -102,6 +109,7 @@ public class ReviewDbStorage implements ReviewStorage {
     public void removeReaction(Long reviewId, Long userId) {
         Boolean wasUseful = getRatingType(reviewId, userId);
         jdbcTemplate.update("DELETE FROM review_like WHERE review_id = ? AND user_id = ?", reviewId, userId);
+
         if (wasUseful != null) {
             if (wasUseful) {
                 decrementUseful(reviewId);
@@ -113,8 +121,10 @@ public class ReviewDbStorage implements ReviewStorage {
 
     private Boolean getRatingType(Long reviewId, Long userId) {
         String sql = "SELECT is_useful FROM review_like WHERE review_id = ? AND user_id = ?";
+
         List<Boolean> result = jdbcTemplate.query(sql,
                 (rs, rowNum) -> rs.getBoolean("is_useful"), reviewId, userId);
+
         return result.isEmpty() ? null : result.get(0);
     }
 
@@ -128,14 +138,14 @@ public class ReviewDbStorage implements ReviewStorage {
         jdbcTemplate.update(decrementUsefulSql, reviewId);
     }
 
-    private Review mapToReview(ResultSet rs, int rowNum) throws SQLException {
+    private Review mapToReview(ResultSet resultSet, int rowNum) throws SQLException {
         Review review = new Review();
-        review.setReviewId(rs.getLong("review_id"));
-        review.setFilmId(rs.getLong("film_id"));
-        review.setUserId(rs.getLong("user_id"));
-        review.setContent(rs.getString("content"));
-        review.setIsPositive(rs.getBoolean("is_positive"));
-        review.setUseful(rs.getInt("useful"));
+        review.setReviewId(resultSet.getLong("review_id"));
+        review.setFilmId(resultSet.getLong("film_id"));
+        review.setUserId(resultSet.getLong("user_id"));
+        review.setContent(resultSet.getString("content"));
+        review.setIsPositive(resultSet.getBoolean("is_positive"));
+        review.setUseful(resultSet.getInt("useful"));
 
         return review;
     }

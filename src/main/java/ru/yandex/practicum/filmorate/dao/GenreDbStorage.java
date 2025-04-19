@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -9,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -19,19 +17,16 @@ public class GenreDbStorage {
 
     public List<Genre> findAll() {
         String sql = "SELECT * FROM genre";
-        return jdbcTemplate.query(sql, this::mapRowToGenre);
+        return jdbcTemplate.query(sql, this::mapToGenre);
     }
 
-    public Optional<Genre> findById(int id) {
-        String sql = "SELECT * FROM genre WHERE genre_id = ?";
-        try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, this::mapRowToGenre, id));
-        } catch (EmptyResultDataAccessException exception) {
-            return Optional.empty();
-        }
+    public Genre findById(int id) {
+        String findByIdSql = "SELECT * FROM genre WHERE genre_id = ?";
+        List<Genre> genres = jdbcTemplate.query(findByIdSql, this::mapToGenre, id);
+        return genres.isEmpty() ? null : genres.get(0);
     }
 
-    private Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
-        return new Genre(rs.getInt("genre_id"), rs.getString("name"));
+    private Genre mapToGenre(ResultSet resultSet, int rowNum) throws SQLException {
+        return new Genre(resultSet.getInt("genre_id"), resultSet.getString("name"));
     }
 }
