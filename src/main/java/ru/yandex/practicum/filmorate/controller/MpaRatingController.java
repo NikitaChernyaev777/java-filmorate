@@ -19,11 +19,11 @@ public class MpaRatingController {
 
     @GetMapping
     public List<MpaRating> getMpaRatings() {
-        return mpaRatingService.getAllMpaRatings();
+        return mpaRatingService.findAll();
     }
 
     @GetMapping("/{id}")
     public MpaRating getMpaRatingById(@PathVariable int id) {
-        return mpaRatingService.getMpaRatingById(id);
+        return mpaRatingService.findById(id);
     }
 }

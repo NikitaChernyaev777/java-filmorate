@@ -27,7 +27,7 @@ public class Film {
     @NotBlank(message = "Название фильма не может быть пустым!")
     private String name;
 
-    @NotBlank(message = "Название фильма не может быть пустым!")
+    @NotBlank(message = "Описание фильма не может быть пустым!")
     @Size(max = 200, message = "Описание фильма не может занимать более 200 символов!")
     private String description;
 
@@ -43,4 +43,6 @@ public class Film {
     private Set<Long> likes = new HashSet<>();
 
     private Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
+
+    private Set<Director> directors = new HashSet<>();
 }

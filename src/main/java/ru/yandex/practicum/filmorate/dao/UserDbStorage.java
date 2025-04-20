@@ -22,6 +22,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Qualifier("userDbStorage")
 public class UserDbStorage implements UserStorage {
+
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -30,15 +31,16 @@ public class UserDbStorage implements UserStorage {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(insertUserSql, new String[]{"user_id"});
-            ps.setString(1, user.getEmail());
-            ps.setString(2, user.getLogin());
-            ps.setString(3, user.getName());
-            ps.setDate(4, java.sql.Date.valueOf(user.getBirthday()));
-            return ps;
+            PreparedStatement preparedStatement = connection.prepareStatement(insertUserSql, new String[]{"user_id"});
+            preparedStatement.setString(1, user.getEmail());
+            preparedStatement.setString(2, user.getLogin());
+            preparedStatement.setString(3, user.getName());
+            preparedStatement.setDate(4, java.sql.Date.valueOf(user.getBirthday()));
+            return preparedStatement;
         }, keyHolder);
 
         user.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+
         return user;
     }
 
@@ -52,9 +54,16 @@ public class UserDbStorage implements UserStorage {
                 user.getName(),
                 user.getBirthday(),
                 user.getId()) == 0) {
-            throw new NotFoundException("Пользователь с Id=" + user.getId() + " не найден");
+            throw new NotFoundException("Пользователь с ID=" + user.getId() + " не найден");
         }
+
         return user;
+    }
+
+    @Override
+    public List<User> findAll() {
+        String findAllUsersSql = "SELECT * FROM PUBLIC.app_user";
+        return jdbcTemplate.query(findAllUsersSql, this::mapToUser);
     }
 
     @Override
@@ -63,16 +72,10 @@ public class UserDbStorage implements UserStorage {
 
         List<User> users = jdbcTemplate.query(findUserByIdSql, this::mapToUser, id);
         if (users.isEmpty()) {
-            throw new NotFoundException("Пользователь с Id=" + id + " не найден");
+            throw new NotFoundException("Пользователь с ID=" + id + " не найден");
         }
 
         return users.get(0);
-    }
-
-    @Override
-    public List<User> findAll() {
-        String findAllUsersSql = "SELECT * FROM PUBLIC.app_user";
-        return jdbcTemplate.query(findAllUsersSql, this::mapToUser);
     }
 
     @Override
@@ -92,6 +95,7 @@ public class UserDbStorage implements UserStorage {
         String listOfFriendsSql = "SELECT u.* FROM app_user u " +
                 "JOIN friendship f ON u.user_id = f.friend_id " +
                 "WHERE f.user_id = ?";
+
         return jdbcTemplate.query(listOfFriendsSql, this::mapToUser, userId);
     }
 
@@ -101,6 +105,7 @@ public class UserDbStorage implements UserStorage {
                 "JOIN friendship f1 ON u.user_id = f1.friend_id " +
                 "JOIN friendship f2 ON f1.friend_id = f2.friend_id " +
                 "WHERE f1.user_id = ? AND f2.user_id = ?";
+
         return jdbcTemplate.query(listOfCommonFriendsSql, this::mapToUser, userId, otherUserId);
     }
 
@@ -110,13 +115,26 @@ public class UserDbStorage implements UserStorage {
         return jdbcTemplate.queryForObject(sql, Integer.class, id) > 0;
     }
 
-    private User mapToUser(ResultSet rs, int rowNum) throws SQLException {
+    @Override
+    public void deleteById(Long userId) {
+        String deleteUserFromFriendshipTableSql = "DELETE FROM friendship WHERE user_id = ? OR friend_id = ?";
+        jdbcTemplate.update(deleteUserFromFriendshipTableSql, userId, userId);
+
+        String deleteUserFromFeedTableSql = "DELETE FROM feed WHERE user_id = ?";
+        jdbcTemplate.update(deleteUserFromFeedTableSql, userId);
+
+        String deleteUserByIdSql = "DELETE FROM app_user WHERE user_id = ?";
+        jdbcTemplate.update(deleteUserByIdSql, userId);
+    }
+
+    private User mapToUser(ResultSet resultSet, int rowNum) throws SQLException {
         User user = new User();
-        user.setId(rs.getLong("user_id"));
-        user.setEmail(rs.getString("email"));
-        user.setLogin(rs.getString("login"));
-        user.setName(rs.getString("name"));
-        user.setBirthday(rs.getDate("birthday").toLocalDate());
+        user.setId(resultSet.getLong("user_id"));
+        user.setEmail(resultSet.getString("email"));
+        user.setLogin(resultSet.getString("login"));
+        user.setName(resultSet.getString("name"));
+        user.setBirthday(resultSet.getDate("birthday").toLocalDate());
+
         return user;
     }
 }

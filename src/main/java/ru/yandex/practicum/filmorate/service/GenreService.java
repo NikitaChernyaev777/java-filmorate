@@ -14,12 +14,17 @@ public class GenreService {
 
     private final GenreDbStorage genreDbStorage;
 
-    public List<Genre> getAllGenres() {
+    public List<Genre> findAll() {
         return genreDbStorage.findAll();
     }
 
-    public Genre getGenreById(int id) {
-        return genreDbStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException("Жанр с id = " + id + " не найден!"));
+    public Genre findById(int id) {
+        Genre genre = genreDbStorage.findById(id);
+
+        if (genre == null) {
+            throw new NotFoundException("Жанр с ID=" + id + " не найден");
+        }
+
+        return genre;
     }
 }

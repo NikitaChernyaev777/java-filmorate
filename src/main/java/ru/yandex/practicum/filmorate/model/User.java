@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 
 import java.time.LocalDate;
 import java.util.HashMap;
